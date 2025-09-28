@@ -1,6 +1,125 @@
 # 🚀 Laboratorio SRE Kafka - Preparación Banco Falabella
 
-## 📋 Índice
+## 🎯 Guía de Inicio Rápido
+
+### ✅ Pre-requisitos
+1. **Docker Desktop** instalado y ejecutándose
+2. **Python 3** con pip (para el simulador)
+3. **Git** para clonar el repo
+
+### 🚀 Pasos para Ejecutar el Lab
+
+#### 1. Preparar el Entorno
+```bash
+# 1. Asegúrate que Docker esté corriendo
+docker info
+
+# 2. Instalar dependencias Python
+pip install kafka-python
+
+# 3. Dar permisos de ejecución a scripts
+chmod +x *.sh
+```
+
+#### 2. Levantar el Cluster
+```bash
+# Levantar cluster completo (3 brokers + Zookeeper + UI)
+docker-compose -f docker-compose-cluster.yml up -d
+
+# Esperar que esté listo (importante!)
+sleep 60
+
+# Verificar que todos los contenedores estén corriendo
+docker ps
+```
+
+#### 3. Crear Topics Bancarios
+```bash
+# Crear todos los topics necesarios
+./create-bank-topics.sh
+
+# Verificar que se crearon correctamente
+./sre-commands.sh cluster-health
+```
+
+#### 4. Generar Tráfico de Prueba
+```bash
+# Ejecutar simulador de transacciones bancarias
+# Esto generará tráfico por 10 minutos
+python3 simulate-bank-traffic.py
+```
+
+#### 5. Monitorear Métricas
+```bash
+# En otra terminal, ejecutar comandos de monitoreo
+./sre-commands.sh consumer-lag
+./sre-commands.sh performance
+./sre-commands.sh topic-partitions
+```
+
+### 🔍 Qué Deberías Ver
+
+#### En Kafka UI (http://localhost:8080):
+- **Topics activos**: 7 topics bancarios con datos fluyendo
+- **Mensajes en tiempo real**: Pagos, alertas de fraude, eventos de usuario
+- **Particiones distribuidas**: Entre los 3 brokers
+- **Throughput**: ~100-500 msg/segundo según simulación
+
+#### En los Topics:
+1. **bank.transactions.payments**
+   - Pagos con montos en CLP
+   - Status: completed/pending/failed
+   - Merchants: FALABELLA, WALMART, etc.
+
+2. **bank.fraud.alerts**
+   - Alertas con risk_score > 60
+   - Razones: unusual_location, high_amount, etc.
+   - Acciones: block/review/notify
+
+3. **bank.users.events**
+   - Login/logout de usuarios
+   - Cambios de perfil y contraseña
+   - Consultas de saldo
+
+#### Métricas Esperadas:
+```
+✅ Cluster Health: 3/3 brokers activos
+✅ Topics: 7 creados con replication factor 3
+✅ Throughput: 100-500 mensajes/segundo
+✅ Consumer Lag: < 100 mensajes (normal)
+✅ Error Rate: < 1%
+```
+
+#### Comandos para Verificar:
+```bash
+# Ver estado general
+./sre-commands.sh cluster-health
+
+# Ver lag de consumidores
+./sre-commands.sh consumer-lag
+
+# Test de rendimiento
+./sre-commands.sh performance
+
+# Ver logs recientes
+./sre-commands.sh logs
+```
+
+### 🚨 Simular Incidentes (Opcional)
+```bash
+# Simular caída de broker
+./simulate-failures.sh broker-down
+
+# Crear consumer lag artificial
+./simulate-failures.sh consumer-lag
+
+# Simular partición de red
+./simulate-failures.sh network-partition
+```
+
+---
+
+## 📋 Índice Detallado
 1. [Cluster Multi-Broker](#cluster-multi-broker)
 2. [Simulaciones Bancarias](#simulaciones-bancarias)
 3. [Monitoreo con Datadog](#monitoreo-con-datadog)
