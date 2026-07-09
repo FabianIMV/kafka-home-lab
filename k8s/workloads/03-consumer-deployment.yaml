@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lab-consumer-script
+  namespace: kafka-lab
+data:
+  consume.sh: |
+    #!/bin/sh
+    set -eu
+
+    BOOTSTRAP="kafka-lab-kafka-bootstrap.kafka-lab.svc:9092"
+    CONSUMER="/opt/kafka/bin/kafka-console-consumer.sh"
+    TOPIC="${TOPIC:-lab.orders}"
+    GROUP="${GROUP:-lab-consumer-group}"
+
+    echo "Consumidor (deliberadamente lento) iniciado. topic=$TOPIC group=$GROUP"
+
+    while true; do
+      "$CONSUMER" \
+        --bootstrap-server "$BOOTSTRAP" \
+        --topic "$TOPIC" \
+        --group "$GROUP" \
+        --max-messages 5 \
+        --timeout-ms 15000 \
+        --consumer-property auto.offset.reset=earliest || true
+      echo "-- pausa deliberada (simula procesamiento lento) --"
+      sleep 3
+    done
+---
+# Arranca con 1 replica: produce lag visible por si solo, porque procesa
+# a proposito mas lento de lo que el productor genera mensajes.
+# Escalalo (kubectl scale) para ver como el lag baja al sumar consumers al grupo.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-consumer-orders
+  namespace: kafka-lab
+  labels:
+    app: lab-consumer-orders
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lab-consumer-orders
+  template:
+    metadata:
+      labels:
+        app: lab-consumer-orders
+    spec:
+      containers:
+        - name: consumer
+          image: apache/kafka:3.8.0
+          command: ["/bin/sh", "/scripts/consume.sh"]
+          env:
+            - name: TOPIC
+              value: lab.orders
+            - name: GROUP
+              value: lab-consumer-group
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 384Mi
+      volumes:
+        - name: script
+          configMap:
+            name: lab-consumer-script
+            defaultMode: 0755
