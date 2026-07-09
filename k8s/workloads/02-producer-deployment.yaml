@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-producer
+  namespace: kafka-lab
+  labels:
+    app: lab-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lab-producer
+  template:
+    metadata:
+      labels:
+        app: lab-producer
+    spec:
+      containers:
+        - name: producer
+          image: apache/kafka:3.8.0
+          command: ["/bin/sh", "/scripts/produce.sh"]
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 384Mi
+      volumes:
+        - name: script
+          configMap:
+            name: lab-producer-script
+            defaultMode: 0755

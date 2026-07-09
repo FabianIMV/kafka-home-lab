@@ -1,0 +1,16 @@
+# Un solo nodo con ambos roles (controller + broker) para un lab liviano.
+# En "producción" real esto se separaría en pools distintos con >=3 replicas cada uno.
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: dual-role
+  namespace: kafka-lab
+  labels:
+    strimzi.io/cluster: kafka-lab
+spec:
+  replicas: 1
+  roles:
+    - controller
+    - broker
+  storage:
+    type: ephemeral

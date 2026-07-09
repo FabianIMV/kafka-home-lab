@@ -1,0 +1,23 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: lab-orders
+  namespace: kafka-lab
+  labels:
+    strimzi.io/cluster: kafka-lab
+spec:
+  topicName: lab.orders
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: lab-payments
+  namespace: kafka-lab
+  labels:
+    strimzi.io/cluster: kafka-lab
+spec:
+  topicName: lab.payments
+  partitions: 6
+  replicas: 1

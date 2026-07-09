@@ -1,8 +1,25 @@
 # Kafka Home Lab
 
-Un entorno completo de Apache Kafka para desarrollo y pruebas locales usando Docker Compose.
+Un entorno completo de Apache Kafka para desarrollo y pruebas locales.
 
-## 🚀 Inicio Rápido
+## ¿Docker Compose o Kubernetes?
+
+Hay dos formas de usar este repo, según qué quieras practicar:
+
+| | Docker Compose (esta página) | [K8S_LAB.md](./K8S_LAB.md) |
+|---|---|---|
+| Qué levanta | Kafka + Zookeeper + Kafka UI | 2 clusters kind (`dev`/`prod`) con Kafka vía Strimzi |
+| Para qué sirve | Probar Kafka rápido, sin más | Practicar `kubectl` (contextos, namespaces, scaling) + Kafka como se corre en muchas empresas |
+| Genera tráfico solo | No (tú produces/consumes a mano) | Sí, un productor corre 24/7 y un consumidor lento deja ver el lag creciendo/bajando |
+| Requiere | Solo Docker | Docker + `kind` + `kubectl` |
+
+> **Nota sobre GitHub Pages:** no es una opción para ninguno de los dos casos. Pages solo sirve archivos estáticos — no puede correr contenedores, un cluster de k8s ni un broker de Kafka. Todo esto tiene que correr en tu máquina (o en una VM/cloud con cómputo real).
+
+Si quieres memorizar `kubectl` con contextos y entender offsets/consumer lag en vivo (lo más parecido a un ambiente real), ve directo a **[K8S_LAB.md](./K8S_LAB.md)**.
+
+Si solo quieres un Kafka rápido para jugar sin la capa de Kubernetes, sigue con lo de abajo.
+
+## 🚀 Inicio Rápido (Docker Compose)
 
 ```bash
 # Iniciar Kafka
@@ -152,6 +169,9 @@ docker network inspect kafka-home-lab_default
 
 ## 📚 Recursos Adicionales
 
+- [K8S_LAB.md](./K8S_LAB.md) — Kafka sobre Kubernetes local (kind + Strimzi), para practicar `kubectl` y consumer lag en vivo
 - [Documentación oficial de Kafka](https://kafka.apache.org/documentation/)
 - [Kafka UI GitHub](https://github.com/provectus/kafka-ui)
 - [Confluent Platform](https://docs.confluent.io/)
+- [Strimzi (operador de Kafka para Kubernetes)](https://strimzi.io/)
+- [kind (Kubernetes in Docker)](https://kind.sigs.k8s.io/)

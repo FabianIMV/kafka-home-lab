@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lab-producer-script
+  namespace: kafka-lab
+data:
+  produce.sh: |
+    #!/bin/sh
+    set -eu
+
+    BOOTSTRAP="kafka-lab-kafka-bootstrap.kafka-lab.svc:9092"
+    PRODUCER="/opt/kafka/bin/kafka-console-producer.sh"
+
+    # Numero pseudoaleatorio portable (sin depender de bash/$RANDOM)
+    rand() {
+      od -An -N2 -tu2 /dev/urandom | tr -d ' ' | awk -v max="$1" '{print $1 % max}'
+    }
+
+    gen_orders() {
+      i=0
+      while true; do
+        i=$((i + 1))
+        user_id="USR_$(rand 20)"
+        amount=$(( $(rand 100000) + 1000 ))
+        ts=$(date -Iseconds)
+        printf '%s:{"order_id":"ORD-%s","user_id":"%s","amount":%s,"status":"created","ts":"%s"}\n' \
+          "$user_id" "$i" "$user_id" "$amount" "$ts"
+        sleep_ms=$(( $(rand 800) + 200 ))
+        sleep "$(awk -v ms="$sleep_ms" 'BEGIN{printf "%.2f", ms/1000}')"
+      done
+    }
+
+    gen_payments() {
+      i=0
+      while true; do
+        i=$((i + 1))
+        user_id="USR_$(rand 20)"
+        amount=$(( $(rand 200000) + 5000 ))
+        ts=$(date -Iseconds)
+        printf '%s:{"payment_id":"PAY-%s","user_id":"%s","amount":%s,"method":"card","ts":"%s"}\n' \
+          "$user_id" "$i" "$user_id" "$amount" "$ts"
+        sleep_ms=$(( $(rand 2500) + 500 ))
+        sleep "$(awk -v ms="$sleep_ms" 'BEGIN{printf "%.2f", ms/1000}')"
+      done
+    }
+
+    echo "Productor iniciado -> $BOOTSTRAP"
+
+    gen_orders | "$PRODUCER" --bootstrap-server "$BOOTSTRAP" --topic lab.orders \
+      --property "parse.key=true" --property "key.separator=:" &
+
+    gen_payments | "$PRODUCER" --bootstrap-server "$BOOTSTRAP" --topic lab.payments \
+      --property "parse.key=true" --property "key.separator=:" &
+
+    wait
